@@ -1,8 +1,11 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const PORT = 3000;
 
+
+app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
@@ -56,9 +59,9 @@ app.get("/game/:id", (req, res) => {
 });
 
 app.post("/game", (req, res) => {
-    const { title, price, year }  = req.body;
+    const { title, preco , year }  = req.body;
 
-    DB.games.push({ id: 60,title, price, year });
+    DB.games.push({ id: 60,title, preco, year });
     res.sendStatus(200);
 });
 
