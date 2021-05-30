@@ -2,12 +2,36 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const jwt = require("jsonwebtoken");
 const PORT = 3000;
 
-
+const JWTSecret = "tokenSecreto";
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+function auth(req, res, next) {
+    const authToken = req.headers['authorization'];
+    if(authToken){
+        const bearer = authToken.split(' ');
+        const token = bearer[0];
+
+        jwt.verify(token, JWTSecret, ( err, data ) => {
+            if(err){
+                res.status(401);
+                res.json({ err :"Token inválido "});
+            } else {
+                req.token = token;
+                req.loggedUser = { id: data.id, email: data.email };
+                next();
+            }
+        });
+
+    } else {
+        res.status(401);
+        res.json({ err:"Token inválido "});
+    }
+}
 
 let DB = {
     games: [
@@ -35,10 +59,24 @@ let DB = {
             ano: 2010,
             preco: 80
         }
+    ],
+    users: [
+        {
+            id: 1,
+            name: "Gustavo Valente",
+            email: "gvn@gvn.com",
+            password: "123"
+        },
+        {
+            id: 2,
+            name: "Nego Hugo",
+            email: "nego@hugo.com",
+            password: "321"
+        }
     ]
 }
 
-app.get("/games", (req, res) => {
+app.get("/games",auth, (req, res) => {
     res.statusCode = 200;
     res.json(DB.games);
 });
@@ -98,6 +136,42 @@ app.put("/game/:id", (req, res) => {
     }
 });
 
+app.post("/auth", (req, res) => {
+    const { email, password } = req.body;
+
+    if(email){
+
+        const user = DB.users.find( u => u.email == email);
+        if(user){
+            if(user.password == password){
+
+                jwt.sign({ id: user.id, email: user.email },
+                    JWTSecret, { expiresIn: '48h' },
+                    (err, token) => {
+                        if(err){
+                            res.status(400);
+                            res.json({ err:"Falha Interna"});
+                        } else {
+                            res.status(200);
+                            res.json({ token: token });
+                        }
+                });
+
+            } else {
+                res.status(401);
+                res.json({ err: "Credenciais inválidas "});
+            }
+
+        } else {
+            res.status(404);
+            res.json({ err: "E-mail ou senha inválido 2" });
+        }
+
+    } else {
+        res.status(400);
+        res.json({ err: "E-mail ou senha é inválido" });
+    }
+});
 
 
 app.listen(PORT, () => {

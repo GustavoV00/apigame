@@ -5,6 +5,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consumo de API</title>
+
+    <h2>Login</h2>
+    <input type="text" name="email" id="email" placeholder="email"><br><br>
+    <input type="text" name="password" id="password" placeholder="*******"><br><br>
+    <button onclick="login()">Entrar</button>
+
     <hr>
     <h4>Lista de games</h4>
     <ul id="games"></ul>
@@ -35,6 +41,30 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
     const PORT = 3000;
+    let axiosConfig = {
+        headers: {
+            Authorization: localStorage.getItem("token")
+        }
+    }
+
+    function login(){
+        let emailField = document.getElementById("email");
+        let passwordField = document.getElementById("password");
+
+        const email = emailField.value;
+        const password = passwordField.value;
+        const auth = { email, password };
+
+        axios.post(`http://localhost:${PORT}/auth`, auth).then(res => {
+            const token = res.data.token;
+            localStorage.setItem("token", token);
+            axiosConfig.headers["Authorization"] = localStorage.getItem("token");
+
+        }).catch(err => {
+            alert("Login Incorreto!");
+
+        });
+    }
 
 
     // Cadastrar Jogos
@@ -63,7 +93,7 @@
     function deleteGame(listItem){
         const id = listItem.getAttribute("data-id");
 
-        axios.delete(`http://localhost:${PORT}/game/${id}`).then(res => {
+        axios.delete(`http://localhost:${PORT}/game/${id}`, axiosConfig).then(res => {
             alert("Game deletado!");
 
         }).catch(err => {
@@ -86,7 +116,7 @@
 
         const id = idInput.value;
 
-        axios.put(`http://localhost:${PORT}/game/${id}`, game).then(res => {
+        axios.put(`http://localhost:${PORT}/game/${id}`, game, axiosConfig).then(res => {
             console.log("Entrei aqui");
             if(res.status == 200){
                 alert("Game atualizado!");
@@ -108,12 +138,10 @@
         document.getElementById("titleEdit").value = title;
         document.getElementById("anoEdit").value = ano;
         document.getElementById("precoEdit").value = preco;
-
-
     }
 
     // Listar jogos
-    axios.get(`http://localhost:${PORT}/games`).then(res => {
+    axios.get(`http://localhost:${PORT}/games`, axiosConfig).then(res => {
         let games = res.data;
         let list = document.getElementById('games');
 
