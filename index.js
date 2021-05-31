@@ -77,18 +77,64 @@ let DB = {
 }
 
 app.get("/games",auth, (req, res) => {
+    const HATEOAS = [
+        { 
+            href: `http://localhost:${PORT}/game/0`,
+            method: "DELETE",
+            rel: "delete_game"
+        },
+        {
+            href: `http://localhost:${PORT}/game/0`,
+            method: "PUT",
+            rel: "edit_game"
+        },
+        {
+            href: `http://localhost:${PORT}/game/0`,
+            method: "GET",
+            rel: "get_game"
+        },
+        {
+            href: `http://localhost:${PORT}auth`,
+            method: "POST",
+            rel: "login"
+        }
+    ]
+
     res.statusCode = 200;
-    res.json(DB.games);
+    res.json({ games: DB.games, _links: HATEOAS })
 });
 
 app.get("/game/:id", (req, res) => {
     const id = parseInt(req.params.id);
     if(isNaN(id)) res.sendStatus(400);
     else {
+        const HATEOAS = [
+            { 
+                href: `http://localhost:${PORT}/game/0`,
+                method: "DELETE",
+                rel: "delete_game"
+            },
+            {
+                href: `http://localhost:${PORT}/game/0`,
+                method: "PUT",
+                rel: "edit_game"
+            },
+            {
+                href: `http://localhost:${PORT}/game/0`,
+                method: "GET",
+                rel: "get_game"
+            },
+            {
+                href: `http://localhost:${PORT}/games`,
+                method: "GET",
+                rel: "get_all_games"
+            }
+        ]
         const gameId = DB.games.find(gm => gm.id == id);
+        console.log(gameId);
         if(gameId){
             res.statusCode = 200;
-            res.json(gameId);
+            res.json({ gameId, _links: HATEOAS });
 
         } else {
             res.sendStatus(404);
